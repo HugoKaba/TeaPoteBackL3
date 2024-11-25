@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int             @id @default(autoincrement())
+  name          String          @unique @db.Char(65)
+  mail          String          @unique @db.Char(255)
+  password      String          @db.VarChar(65)
+  urlImage      String          @db.VarChar(255)
+  Friend        Friend[]
+  friended      Friend[]        @relation("UserToFriend")
+  Tea           Tea[]
+  Moment        Moment[]
+  SharedCard    SharedCard[]
+  PreviousOrder PreviousOrder[]
+  CartItem      CartItem[]
+  Comments      Comments[]
+  TeaType       TeaType[]
+  Ingredient    Ingredient[]
+  JwtToken      JwtToken?
+  expiredAt     DateTime?       @db.Date
+  FavoriteProduct FavoriteProduct[]
+  stripeCustomerId String?
+}
+
+model Friend {
+  id         Int          @id @default(autoincrement())
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId     Int
+  friend     User         @relation("UserToFriend", fields: [friendId], references: [id], onDelete: Cascade)
+  friendId   Int
+  accepted   Boolean
+  blocked    Boolean
+  SharedCard SharedCard[]
+}
+
+model Tea {
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar(65)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId         Int
+  isInTeabag     Boolean
+  tempMin        Int              @db.SmallInt
+  tempMax        Int              @db.SmallInt
+  timeMin        Int              @db.SmallInt
+  timeMax        Int              @db.SmallInt
+  isBio          Boolean
+  tips           String           @db.LongText
+  country        Country?          @relation(fields: [countryId], references: [id], onUpdate: Cascade)
+  countryId      Int?
+  theine         Int              @db.SmallInt
+  isFavorite     Boolean
+  date           DateTime         @default(now())
+  HasMoment      HasMoment[]
+  Image          Image?
+  SharedCard     SharedCard?
+  Comments       Comments[]
+  HasTypes       HasTypes?
+  HasIngredients HasIngredients[]
+}
+
+model HasMoment {
+  id       Int    @id @default(autoincrement())
+  moment   Moment @relation(fields: [momentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  momentId Int
+  tea      Tea    @relation(fields: [teaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teaId    Int
+}
+
+model Moment {
+  id        Int         @id @default(autoincrement())
+  name      String      @db.VarChar(65)
+  urlImage  String      @db.VarChar(255)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    Int
+  HasMoment HasMoment[]
+}
+
+model Country {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(65) @unique
+  Tea  Tea[]
+}
+
+model Image {
+  id       Int    @id @default(autoincrement())
+  urlImage String @db.VarChar(255)
+  tea      Tea    @relation(fields: [teaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teaId    Int    @unique
+}
+
+model SharedCard {
+  id       Int    @id @default(autoincrement())
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId   Int
+  friend   Friend @relation(fields: [friendId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  friendId Int
+  tea      Tea    @relation(fields: [teaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teaId    Int    @unique
+}
+
+model PreviousOrder {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId Int
+}
+
+model Product {
+  id            Int             @id @default(autoincrement())
+  name          String          @db.VarChar(65)
+  price         Float           @db.Float
+  details       String          @db.VarChar(500)
+  brand         String          @db.Char(65)
+  PreviousOrder PreviousOrder[]
+  CartItem      CartItem[]
+  FavoriteProduct FavoriteProduct[]
+}
+
+model FavoriteProduct {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId Int
+  @@unique([userId, productId])
+}
+
+model CartItem {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  productId Int
+  quantity  Int     @db.SmallInt
+}
+
+model Comments {
+  id     Int    @id @default(autoincrement())
+  tea    Tea    @relation(fields: [teaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teaId  Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId Int
+  text   String @db.LongText
+}
+
+model HasTypes {
+  id        Int     @id @default(autoincrement())
+  TeaType   TeaType @relation(fields: [teaTypeId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teaTypeId Int
+  tea       Tea     @relation(fields: [teaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  teaId     Int     @unique
+}
+
+model TeaType {
+  id       Int        @id @default(autoincrement())
+  HasTypes HasTypes[]
+  name     String     @db.VarChar(65)
+  urlImage String     @db.VarChar(255)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId   Int
+}
+
+model HasIngredients {
+  id           Int        @id @default(autoincrement())
+  ingredientId Int
+  teaId        Int
+  Ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tea          Tea        @relation(fields: [teaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Ingredient {
+  id             Int              @id @default(autoincrement())
+  name           String           @db.LongText()
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId         Int
+  HasIngredients HasIngredients[]
+}
+
+model JwtToken {
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id           Int     @id @default(autoincrement())
+  userId       Int     @unique
+  refreshToken String?
+}
